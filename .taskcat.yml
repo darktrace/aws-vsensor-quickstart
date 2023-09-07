@@ -1,5 +1,5 @@
 project:
-  name: quickstart-darktrace-vsensor
+  name: cfn-ps-darktrace-vsensor
   owner: quickstart-eng@amazon.com
   s3_regional_buckets: true
   parameters:
