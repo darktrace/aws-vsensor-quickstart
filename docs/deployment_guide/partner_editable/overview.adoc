@@ -1,10 +1,18 @@
-This guide covers the information you need to deploy the {partner-product-name} Partner Solution in the AWS Cloud.
+This Quick Start deploys Darktrace vSensor virtual threat detection on the Amazon Web Services (AWS) Cloud. Instead of relying on flow logs, Darktrace probes analyze raw data from mirrored virtual private cloud (VPC) traffic to learn to identify threats. This guide covers the steps necessary to deploy this Quick Start.
 
-// Fill in the info in <angle brackets> for use on the landing page only: 
-This Amazon Web Services (AWS) Partner Solution deploys [<product name>](<partner's marketing product page>) in the AWS Cloud so that <purpose>. This solution is for <target users> who want to <do what> so that <why>. For more information, refer to the [<product name> documentation](<URL>).
+Amazon Virtual Private Cloud (VPC) traffic mirroring copies traffic from Amazon Elastic Compute Cloud (Amazon EC2) instances you want to monitor. A Network Load Balancer distributes mirrored traffic to Darktrace vSensor probes in private subnets. The deployment also supports sending data to vSensors from Darktrace osSensors you configure on virtual machines, containerized applications, and legacy EC2 instance types that do not support traffic mirroring.
 
-// Deploying this solution does not guarantee an organization’s compliance with any laws, certifications, policies, or other regulations. [Uncomment this statement only for solutions that relate to compliance. We'll add the corresponding reference part to the landing page and get legal approval before publishing.]
+Darktrace vSensor extracts relevant metadata from mirrored traffic and stores it in an Amazon Simple Storage Service (Amazon S3) bucket. Your existing Darktrace deployment analyzes the metadata using Darktrace's Enterprise Immune System to build metrics it uses to identify threats.
 
-// For advanced information about the product, troubleshooting, or additional functionality, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/operational/index.html[Operational Guide^].
+Darktrace vSensors support syslog to https://www.darktrace.com/en/integrations/[integrate^] with third-party security information and event management tools.
 
-// For information about using this Partner Solution for migrations, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/migration/index.html[Migration Guide^].
+=== High Availability on AWS
+
+If you choose to deploy more than one vSensor, they are deployed across multiple Availability Zones for high-availability. For more information, see https://aws.amazon.com/about-aws/global-infrastructure/regions_az/[Regions and Availability Zones].
+
+
+This guide is for database administrators, enterprise architects, system administrators, and developers who want to run {partner-product-name} probes in a highly-available Amazon Elastic Compute Cloud (Amazon EC2) environment.
+
+// For advanced information about the product, troubleshooting, or additional functionality, refer to the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational Guide^].
+
+// For information about using this Quick Start for migrations, refer to the https://{quickstart-github-org}.github.io/{quickstart-project-name}/migration/index.html[Migration Guide^].
