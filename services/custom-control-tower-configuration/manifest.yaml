@@ -4,7 +4,7 @@ version: 2021-03-15
 resources:
   - name: darktrace-vsensor
     description: This template creates a virtual private cloud (VPC) infrastructure for a multi-Availability Zone vSensor deployment on the Amazon Web Services (AWS) Cloud. It deploys a VPC, bastion hosts, and scalable cluster of Darktrace vSensors behind a Network Load Balancer. **WARNING** You will be billed for AWS resources you use if you create a stack from this template. (qs-1rmjte82s)
-    resource_file: s3://aws-quickstart-us-east-1/quickstart-darktrace-vsensor/templates/darktrace-vsensor-main.template.yaml
+    resource_file: s3://aws-ia-us-east-1/cfn-ps-darktrace-vsensor/templates/darktrace-vsensor-main.template.yaml
     parameters:
     - parameter_key: AvailabilityZones
       parameter_value: us-east-1a, us-east-1b
@@ -23,11 +23,11 @@ resources:
     - parameter_key: PublicSubnet2CIDR
       parameter_value: 10.0.144.0/20
     - parameter_key: QSS3BucketName
-      parameter_value: aws-quickstart
+      parameter_value: aws-ia
     - parameter_key: QSS3BucketRegion
       parameter_value: us-east-1
     - parameter_key: QSS3KeyPrefix
-      parameter_value: quickstart-darktrace-vsensor/
+      parameter_value: cfn-ps-darktrace-vsensor/
     - parameter_key: RemoteAccessCIDR
       parameter_value: 127.0.0.1/32
     - parameter_key: ShortID

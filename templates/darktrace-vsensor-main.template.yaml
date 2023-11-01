@@ -417,7 +417,7 @@ Parameters:
       The Quick Start bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a 
       hyphen (-).
-    Default: aws-ia-us-east-1
+    Default: aws-ia
     Description:
       Name of the S3 bucket for your copy of the Quick Start assets. 
       Keep the default name unless you are customizing the template. 
@@ -460,7 +460,7 @@ Parameters:
 Conditions:
   UsingDefaultBucket: !Equals
     - !Ref QSS3BucketName
-    - "aws-quickstart"
+    - "aws-ia"
   CreateBastion: !And
     - !Equals 
       - !Ref BastionEnable
@@ -613,7 +613,7 @@ Resources:
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/aws-vpc.template.yaml'
           - S3Bucket: !If
               - UsingDefaultBucket
-              - !Sub "aws-quickstart-${AWS::Region}"
+              - !Sub "aws-ia-${AWS::Region}"
               - !Ref "QSS3BucketName"
             S3Region: !If
               - UsingDefaultBucket
@@ -675,7 +675,7 @@ Resources:
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/cfn-ps-linux-bastion/templates/linux-bastion-entrypoint-existing-vpc.template.yaml'
           - S3Bucket: !If
               - UsingDefaultBucket
-              - !Sub "aws-quickstart-${AWS::Region}"
+              - !Sub "aws-ia-${AWS::Region}"
               - !Ref "QSS3BucketName"
             S3Region: !If
               - UsingDefaultBucket
@@ -732,7 +732,7 @@ Resources:
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/darktrace-vsensor-workload.template.yaml'
           - S3Bucket: !If
               - UsingDefaultBucket
-              - !Sub "aws-quickstart-${AWS::Region}"
+              - !Sub "aws-ia-${AWS::Region}"
               - !Ref "QSS3BucketName"
             S3Region: !If
               - UsingDefaultBucket
