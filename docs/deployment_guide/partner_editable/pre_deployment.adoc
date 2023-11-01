@@ -33,3 +33,20 @@ Register a new push token to enable connection between vSensor probes and an exi
 If your Darktrace Instance is behind a firewall, you must grant access to the instance from the IP addresses of your NAT Gateways after deployment. For more information, see link:#post-deployment-steps[Post deployment steps], later in this guide.
 
 NOTE: Darktrace cloud instances are already configured to allow push token access, no firewall changes are necessary.
+
+=== Traffic Mirror Configuration Modes
+
+It is important you must understand the different traffic mirroring options available before deploying.
+
+A new option `CrossZoneLBEnable` has been provided to reduce bandwidth costs for traffic ingestion.
+
+*If "No" is set* (the default), the load balancer will only send mirrored traffic to vSensors in the same Availability Zone as the mirror source. The same is true for osSensor traffic.
+
+This option reduces costs by preventing mirror traffic from crossing zones, which can be substantial in large bandwidth environments.
+
+WARNING: You must configure the number of vSensors deployed (minimum and desired) to meet or exceed the count of availability zones deployed to, otherwise traffic mirror sessions and osSensors in zones without vSensors will not be mirrored.
+
+*If "Yes" is set*, it is possible to reduce the vSensor count as low as 1 without loss of traffic mirroring, this may be suited to small traffic environments.
+
+NOTE: Select at least 2 availability zones for highly available fault tolerance.
+

@@ -37,6 +37,7 @@ Metadata:
           - VpcCIDRBlock
           - SshCIDRBlock
           - Subnets
+          - CrossZoneLBEnable
       - Label:
           default: VPC Traffic Mirror configuration
         Parameters:
@@ -53,26 +54,28 @@ Metadata:
         Parameters:
           - ShortID
 
-
     ParameterLabels:
       # Darktrace Instance Config
+
       DarktraceInstanceHostname:
-        default: Darktrace Instance host name
+        default: Darktrace Instance FQDN / IP
       DarktraceInstancePushtoken:
         default: Darktrace Instance push token
       DarktraceInstanceProxy:
         default: Darktrace Instance proxy URL
+
       # vSensor Config
+
       SessionManagerEnable:
         default: Deploy with AWS Session Manager?
       InstanceType:
         default: EC2 instance type
       KeyPairName:
-        default: EC2 key pair Name
+        default: EC2 key pair name
       InstanceSecurityGroups:
         default: Security groups
       VsensorUpdatekey:
-        default: Update key
+        default: vSensor Update key
       DesiredCapacityASG:
         default: Desired vSensor instance capacity
       MinSizeASG:
@@ -81,7 +84,9 @@ Metadata:
         default: Maximum vSensor instance capacity
       osSensorHMAC:
         default: osSensor HMAC Token
+
       # Networking Config
+
       DeploymentVPC:
         default: Deployment VPC
       VpcCIDRBlock:
@@ -90,19 +95,28 @@ Metadata:
         default: SSH CIDR block
       Subnets:
         default: Subnets
+
+      # Logs and PCAPs Config
+
+      LogGroupRetention:
+        default: CloudWatch logs retention (days)
+      LifecycleS3BucketDays:
+        default: Captured packets storage retention (days)
+
       # Traffic Mirror Config
+
       TrafficMirrorRuleNumber:
         default: Traffic Mirror rule number
       TrafficMirrorSourceCIDR:
         default: Source traffic CIDR to filter (0.0.0.0/0 for all traffic)
       TrafficMirrorDestCIDR:
         default: Destination traffic CIDR to filter (0.0.0.0/0 for all traffic)
-      # Logs and PCAPs Config
-      LogGroupRetention:
-        default: CloudWatch logs retention (days)
-      LifecycleS3BucketDays:
-        default: Captured packets storage retention (days)
+      CrossZoneLBEnable:
+        default: Enable Cross-Zone Load Balancing
+
+
       # Quickstart Config
+
       ShortID:
         default: Quick Start unique run ID (12 characters or less)
 
@@ -111,19 +125,19 @@ Parameters:
 
   DarktraceInstanceHostname:
     Type: AWS::SSM::Parameter::Name
-    Description: "Systems Manager Parameter name: Host name of the Darktrace instance (e.g. https://instancename.cloud.darktrace.com:443). HTTPS Protocol prefix and port suffix are optional. Defaults to port 443."
+    Description: "Internet accessible FQDN of the Darktrace instance (e.g. https://instancename.cloud.darktrace.com:443). This should be the same FQDN you use to access the web interface of Darktrace. HTTPS Protocol prefix and port suffix are optional. Defaults to port 443. (AWS::SSM::Parameter::Name)"
   DarktraceInstancePushtoken:
     Type: AWS::SSM::Parameter::Name
-    Description: "Systems Manager Parameter name: Push token to authenticate with the Darktrace instance. For more information, see the https://customerportal.darktrace.com/login[Darktrace Customer Portal]."
+    Description: "Push token to authenticate with the Darktrace instance, provided when you create a *push token* probe entry in the Darktrace UI Config. (AWS::SSM::Parameter::Name)"
   DarktraceInstanceProxy:
     Type: AWS::SSM::Parameter::Name
-    Description: "Systems Manager Parameter name: Proxy to access the Darktrace instance, include HTTP protocol and optional auth (e.g. http://user:pass@hostname:port). For more information, see the https://customerportal.darktrace.com/login[Darktrace Customer Portal]. Set SSM parameter to 'none' to disable."
+    Description: "Provide proxy if the vSensor requires proxy access to connect to the Darktrace instance. Include HTTP protocol and optional auth (e.g. http://user:pass@hostname:port). Set SSM parameter value to 'none' to disable. (AWS::SSM::Parameter::Name)"
 
   # vSensor Config
 
   SessionManagerEnable:
     Default: 'Yes'
-    Description: Configures IAM permissions to enable AWS Systems Manager Sessions to access vSensors remotely. See QuickStart Deployment guide section "Using AWS Sessions Manager". Typically you may use this instead of the Bastion options.
+    Description: Configure IAM permissions to enable AWS Systems Manager Sessions to access vSensors remotely. See QuickStart Deployment guide section "Using AWS Sessions Manager" (https://aws-quickstart.github.io/quickstart-darktrace-vsensor/#_using_aws_sessions_manager). This can be used in preference to the Bastion hosts for administrative connections to the vSensors.
     Type: String
     AllowedValues:
       - 'Yes'
@@ -131,54 +145,54 @@ Parameters:
   InstanceType:
     Default: t3.medium
     Type: String
-    Description: EC2 instance type. Default is `t3.medium`.
+    Description: Specify the EC2 instance type that will be used in the Auto-Scaling Group. It is recommended to start with `t3.medium`, change if you expect frequent high traffic. (String)
     AllowedValues:
       - t3.medium
       - m5.large
       - m5.2xlarge
       - m5.4xlarge
   KeyPairName:
-    Type: 'AWS::EC2::KeyPair::KeyName'
-    Description: EC2 key pair to use to connect to vSensor.
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI.
   InstanceSecurityGroups:
     Type: 'CommaDelimitedList'
-    Description: Darktrace vSensor security group IDs. A basic vSensor connectivity Security Group (port 80, 443, 4789 for the VPC) will be additionally added by this cloudformation.
+    Description: "*Optional* Add additional Security Groups to the VPC by specifying preexisting Security Group IDs. Note, this is in addition to the required vSensor connectivity Security Group (port 80, 443, 4789 for the VPC) which will be added by this QuickStart template. (CommaDelimitedList)"
   VsensorUpdatekey:
     Type: AWS::SSM::Parameter::Name
-    Description: "Systems Manager Parameter name: Darktrace update key. If you don't have one, contact your Darktrace representative."
+    Description: "The vSensor Update Key is required to download installation packages and updates from Darktrace. It is provided when you create a *push token* probe entry in the Darktrace UI Config or can be found on the Credentials section on the Darktrace Customer Portal (https://customerportal.darktrace.com) (AWS::SSM::Parameter::Name)"
   DesiredCapacityASG:
     Type: Number
-    Description: Desired number of vSensor instances in the Auto-Scaling group.
+    Description: Initial number of vSensor instances in the Auto-Scaling Group(s). The value represents the total for all Availability Zones, so must be at least equal to AZ count if cross-zone balancing is disabled. Default recommended value 1 with cross-zone.
     Default: 1
   MinSizeASG:
     Type: Number
-    Description: Minimum number of vSensor instances in the Auto-Scaling group.
+    Description: Minimum number of vSensor instances in the Auto-Scaling Group(s). The value represents the total for all Availability Zones, so must be at least equal to AZ count if cross-zone balancing is disabled. Default recommended value 1 with cross-zone.
     Default: 1
   MaxSizeASG:
     Type: Number
-    Description: Maximum number of vSensor instances in the Auto-Scaling group.
+    Description: Maximum number of vSensor instances in the Auto-Scaling Group(s). The value represents the total for all Availability Zones, so must be at least equal to AZ count if cross-zone balancing is disabled. Default recommended value 5 with cross-zone.
     Default: 5
   osSensorHMAC:
     Type: AWS::SSM::Parameter::Name
-    Description: "Systems Manager Parameter name: Hash-based message authentication code (HMAC) token to authenticate osSensors with vSensor. The SSM Parameter may be set to 'none' to disable."
+    Description: "Set a pre-shared (HMAC) token that can be supplied to osSensor agents in order for them to authenticate with vSensor. Required if you deploy osSensor agent traffic capturing. Not required if you use AWS Traffic Mirroring. Set SSM parameter value to 'none' to disable. (AWS::SSM::Parameter::Name)"
 
   # Networking Config
 
   DeploymentVPC:
     Type: 'AWS::EC2::VPC::Id'
-    Description: VPC of target deployment.
+    Description: Select the VPC into which to launch the vSensor Auto-Scaling group(s).
   VpcCIDRBlock:
     Type: String
-    Default: '172.16.0.0/12'
-    Description: VPC CIDR block. # TODO: Do we need this? We should find it from DeploymentVPC.
+    Default: '10.0.0.0/16'
+    Description: Enter the CIDR block of the VPC specified above.
   SshCIDRBlock:
     Type: String
-    Default: '172.16.0.0/12'
-    Description: Allowed CIDR block for SSH (Secure Shell) access to vSensor.
+    Default: '10.0.0.0/24'
+    Description: Permit SSH connections from this CIDR block. The vSensor Security Group will be altered accordingly. It is recommended to set any Bastion host addresses here, or set to the VPC CIDR.
   Subnets:
     Type: 'List<AWS::EC2::Subnet::Id>'
     Description: >-
-      List the Subnet Ids that the vSensor should be launched into.
+      Select at least one subnet to launch a vSensor Auto-Scaling Group. It is recommended to deploy one Auto-Scaling Group in a subnet in each mirrored Availability Zone if not using cross-zone load balancing.
       You can specify at most one subnet per Availability Zone.
 
   # Traffic Mirror Config
@@ -190,11 +204,21 @@ Parameters:
   TrafficMirrorSourceCIDR:
     Type: String
     Default: '0.0.0.0/0'
-    Description: Source CIDR for the Traffic Mirror filter. Enter `0.0.0.0/0` for all traffic.
+    Description: "To restrict the traffic captured to that emerging from a specific source IP range, enter the source CIDR block. It will be applied to the Traffic Mirror filter. Enter `0.0.0.0/0` for all traffic."
   TrafficMirrorDestCIDR:
     Type: String
     Default: '0.0.0.0/0'
-    Description: Destination CIDR for the Traffic Mirror filter. Enter `0.0.0.0/0` for all traffic.
+    Description: "To restrict the traffic captured to that destined for a specific IP range, enter the destination CIDR block. It will be applied to the Traffic Mirror filter. Enter `0.0.0.0/0` for all traffic."
+  CrossZoneLBEnable:
+    Type: String
+    Description:
+      Enable (Yes) or disable (No) Cross-Zone Load Balancing.
+      To minimise traffic costs, Cross-Zone Load Balancing is disabled by default.
+      When it is disabled, make sure there is at least one vSensor in each Availability Zone with mirror sources.
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
 
   # Logs & PCAPs Config
 
@@ -218,12 +242,14 @@ Parameters:
       - 731
       - 1827
       - 3653
-    Description: Number of days to retain Cloudwatch logs.
+    Description: Specify the number of days to retain CloudWatch logs. Logs and metrics from the Darktrace vSensor EC2 instances are stored in CloudWatch.
     Default: 30
   LifecycleS3BucketDays:
     Type: Number
-    Description: Number of days to retain captured packets in Amazon S3.
+    Description: Darktrace vSensors store packet capture data in Amazon S3. The PCAP associated with network connections are retreivable via the Darktrace Threat Vizualiser UI. Specify the number of days to retain captured packets in Amazon S3. Set to 0 for no PCAP storage.
+    MinValue: 0
     Default: 7
+
   # Quickstart Config
   ShortID:
     AllowedPattern: ^[0-9a-z-]{0,12}$
@@ -234,7 +260,6 @@ Parameters:
   FocalAmiId:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id'
-    Description: Focal AMI
 
 Conditions:
   NotUsingExtraInstanceSecurityGroups: !Equals
@@ -246,7 +271,20 @@ Conditions:
   GenerateShortID: !Equals
     - !Ref ShortID
     - ""
-
+  CreatePCAPStorage: !Not
+    - !Equals
+      - !Ref LifecycleS3BucketDays
+      - 0
+  AllowCrossZoneLB: !Equals
+    - !Ref CrossZoneLBEnable
+    - "Yes"
+Rules:
+  SubnetsInVPC:
+    Assertions:
+      - Assert: !EachMemberIn
+          - !ValueOfAll [AWS::EC2::Subnet::Id, VpcId]
+          - !RefAll AWS::EC2::VPC::Id
+        AssertDescription: All subnets must exist in the VPC.
 Resources:
 
   ## Generate a short ID if the user does not define one.
@@ -597,7 +635,11 @@ Resources:
               if [ -n "${osSensorHMAC}" ]; then
                 set_ossensor_hmac.sh -t "AWS:SSM" "${osSensorHMAC}"
               fi
-              set_pcap_s3_bucket.sh ${PCAPS}
+              if [ -n "${bucketName}" ]; then
+                set_pcap_s3_bucket.sh "${bucketName}"
+              else
+                set_pcap_size.sh 0
+              fi
               echo "Completed vSensor configuration"
               service confconsole restart || true # To update AWS screenshot with current config.
               #set updatekey, upgrade and enable daily updates
@@ -618,6 +660,10 @@ Resources:
                   - GenerateShortID
                   - !GetAtt ShortIDRand.IDString
                   - !Ref ShortID
+              bucketName: !If
+                - CreatePCAPStorage
+                - !Ref PCAPS
+                - ""
         KeyName: !Ref KeyPairName
         InstanceType: !Ref InstanceType
         BlockDeviceMappings:
@@ -832,16 +878,25 @@ Resources:
       VpcId: !Ref DeploymentVPC
 
   ASG:
-    DependsOn: PCAPCleanupBucketOnDelete # Such that on deletion, the ASG is removed before emptying S3.
     Type: 'AWS::AutoScaling::AutoScalingGroup'
+    # Ignore the DependsOn !Ref below
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [W1019]
     Properties:
       # Give the Autoscaling group itself a name.
       AutoScalingGroupName: !Sub
         - "${ShortID}-vSensor-ASG"
-        - ShortID: !If
-          - GenerateShortID
-          - !GetAtt ShortIDRand.IDString
-          - !Ref ShortID
+        # Can't have a conditional DependsOn, so using !Ref here
+        - DependsOn: !If
+              - CreatePCAPStorage
+              - !Ref PCAPCleanupBucketOnDelete # Such that on deletion, the ASG is removed before emptying S3.
+              - ""
+          ShortID: !If
+              - GenerateShortID
+              - !GetAtt ShortIDRand.IDString
+              - !Ref ShortID
       MinSize: !Ref MinSizeASG
       MaxSize: !Ref MaxSizeASG
       MetricsCollection:
@@ -887,6 +942,7 @@ Resources:
     Type: 'AWS::S3::Bucket'
     # Ignore Bucket versioning for PCAPS.
     # kics-scan ignore-line
+    Condition: CreatePCAPStorage
     Properties:
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -915,6 +971,7 @@ Resources:
 
   PCAPSSSLOnlyPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: CreatePCAPStorage
     Properties:
       Bucket: !Ref PCAPS
       PolicyDocument:
@@ -934,6 +991,7 @@ Resources:
   # Empty the PCAP bucket on Stack deletion to prevent failure.
   CleanupBucketOnDeleteLambdaRole:
     Type: AWS::IAM::Role
+    Condition: CreatePCAPStorage
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -973,6 +1031,7 @@ Resources:
   CleanupBucketOnDeleteLambda:
     DependsOn: PCAPS
     Type: "AWS::Lambda::Function"
+    Condition: CreatePCAPStorage
     Properties:
       Code:
         ZipFile: |
@@ -1092,12 +1151,14 @@ Resources:
 
   CleanupBucketOnDeleteLambdaLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreatePCAPStorage
     Properties:
       LogGroupName: !Sub "/aws/lambda/${CleanupBucketOnDeleteLambda}"
       RetentionInDays: !Ref LogGroupRetention
 
   CleanupBucketOnDeleteLambdaLogPermissions:
     Type: AWS::IAM::Policy
+    Condition: CreatePCAPStorage
     Properties:
       Roles:
         - !Ref CleanupBucketOnDeleteLambdaRole
@@ -1116,9 +1177,10 @@ Resources:
 
   PCAPCleanupBucketOnDelete:
     Type: AWS::CloudFormation::CustomResource
+    Condition: CreatePCAPStorage
     Properties:
       ServiceToken:
-       Fn::GetAtt:
+        Fn::GetAtt:
           - "CleanupBucketOnDeleteLambda"
           - "Arn"
       BucketName: !Ref PCAPS
@@ -1137,7 +1199,10 @@ Resources:
             - !Ref ShortID
       LoadBalancerAttributes:
         - Key: load_balancing.cross_zone.enabled
-          Value: 'true'
+          Value: !If
+            - "AllowCrossZoneLB"
+            - "true"
+            - "false"
       Subnets: !Ref Subnets
       Scheme: internal
       Type: network
@@ -1210,29 +1275,35 @@ Resources:
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
       Policies:
-        - PolicyName: ListPCAPBucket
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-            - Effect: Allow
-              Action:
-                - 's3:ListBucket'
-                - 's3:GetBucketLocation'
-                - 's3:GetLifecycleConfiguration'
-              Resource:
-                - !Sub 'arn:${AWS::Partition}:s3:::${PCAPS}'
-        - PolicyName: AccessPCAPBucket
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-            - Effect: Allow
-              Action:
-                - 's3:PutObject'
-                - 's3:GetObject'
-                - 's3:DeleteObject'
-                - 's3:PutObjectTagging'
-              Resource:
-                - !Sub 'arn:${AWS::Partition}:s3:::${PCAPS}/*'
+        - Fn::If:
+          - CreatePCAPStorage
+          - PolicyName: ListPCAPBucket
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                  - 's3:GetLifecycleConfiguration'
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${PCAPS}'
+          - !Ref AWS::NoValue
+        - Fn::If:
+          - CreatePCAPStorage
+          - PolicyName: AccessPCAPBucket
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:DeleteObject'
+                  - 's3:PutObjectTagging'
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${PCAPS}/*'
+          - !Ref AWS::NoValue
         - PolicyName: "CompleteLifecycleActionAllowPolicy"
           PolicyDocument:
             Version: "2012-10-17"
@@ -1337,6 +1408,7 @@ Resources:
 
 Outputs:
   BucketName:
+    Condition: CreatePCAPStorage
     Description: Name of the PCAP S3 bucket.
     Value: !Ref PCAPS
 
@@ -1368,4 +1440,4 @@ Outputs:
 
   Postdeployment:
     Description: See the deployment guide for post-deployment steps.
-    Value: https://aws-quickstart.github.io/quickstart-darktrace-vsensor/#_postdeployment_steps
+    Value: https://aws-ia.github.io/cfn-ps-darktrace-vsensor/#_postdeployment_steps
