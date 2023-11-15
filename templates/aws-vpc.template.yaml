@@ -1733,7 +1733,7 @@ Resources:
       cfn-lint:
         config:
           ignore_checks:
-            - EIAMPolicyActionWildcard 
+            - EIAMPolicyActionWildcard
             - EPolicyWildcardPrincipal
           ignore_reasons: 
             - EIAMPolicyActionWildcard: Wildcard should not be used for Action in IAM policies. Ignored as we don't want to disable other customer S3 usage from resources created inside this VPC. Apply IAM rules to limit resource access instead.
