@@ -1730,12 +1730,13 @@ Resources:
     Condition: PrivateSubnetsCondition
     Type: AWS::EC2::VPCEndpoint
     Metadata:
-      cfn_nag:
-        rules_to_suppress:
-          - id: EIAMPolicyActionWildcard
-            reason: "Wildcard should not be used for Action in IAM policies. Ignored as we don't want to disable other customer S3 usage from resources created inside this VPC. Apply IAM rules to limit resource access instead."
-          - id: EPolicyWildcardPrincipal
-            reason: "Policy should not allow * Principal. Ignored as we don't want to disable other customer S3 usage from resources created inside this VPC. Apply IAM rules to limit resource access instead."
+      cfn-lint:
+        config:
+          ignore_checks:
+            - id: EIAMPolicyActionWildcard
+              reason: "Wildcard should not be used for Action in IAM policies. Ignored as we don't want to disable other customer S3 usage from resources created inside this VPC. Apply IAM rules to limit resource access instead."
+            - id: EPolicyWildcardPrincipal
+              reason: "Policy should not allow * Principal. Ignored as we don't want to disable other customer S3 usage from resources created inside this VPC. Apply IAM rules to limit resource access instead."
     Properties:
       PolicyDocument:
         Version: '2012-10-17'
