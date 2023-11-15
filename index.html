@@ -866,6 +866,7 @@ p.footer-text a{color:#d7d8d8}
 <ul class="sectlevel2">
 <li><a href="#_generate_aws_systems_manager_parameters">Generate AWS Systems Manager parameters</a></li>
 <li><a href="#_register_a_push_token">Register a push token</a></li>
+<li><a href="#_traffic_mirror_configuration_modes">Traffic Mirror Configuration Modes</a></li>
 </ul>
 </li>
 <li><a href="#_deployment_steps">Deployment steps</a></li>
@@ -901,7 +902,7 @@ p.footer-text a{color:#d7d8d8}
 </div>
 </div>
 <div class="paragraph text-center">
-<p><strong>August 2023</strong><br>
+<p><strong>November 2023</strong><br>
 <em>Development Team Documentations at Darktrace</em><br>
 <em>Tony Bulding, AWS Integration &amp; Automation team</em><br></p>
 </div>
@@ -980,7 +981,7 @@ AWS Cloud.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>A highly available architecture that spans two Availability Zones.</p>
+<p>A highly available architecture (when 2+ Availability Zones are used).</p>
 </li>
 <li>
 <p>A virtual private network (VPC) configured with public and private subnets, according to AWS best practices, to provide you with your own virtual network on AWS.</p>
@@ -1018,17 +1019,7 @@ AWS Cloud.</p>
 <p>An Amazon S3 bucket to store packets captured by Darktrace vSensor.</p>
 </li>
 <li>
-<p>Amazon CloudWatch to provide:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>An alarm to invoke dynamic scaling of the Darktrace vSensor Auto Scaling group.</p>
-</li>
-<li>
-<p>Logs to collect metrics from Darktrace vSensor EC2 instances.</p>
-</li>
-</ul>
-</div>
+<p>Amazon CloudWatch to provide logs to collect metrics from Darktrace vSensor EC2 instances.</p>
 </li>
 </ul>
 </div>
@@ -1142,6 +1133,48 @@ Please review <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg
 </td>
 <td class="content">
 Darktrace cloud instances are already configured to allow push token access, no firewall changes are necessary.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_traffic_mirror_configuration_modes">Traffic Mirror Configuration Modes</h3>
+<div class="paragraph">
+<p>It is important you must understand the different traffic mirroring options available before deploying.</p>
+</div>
+<div class="paragraph">
+<p>A new option <code>CrossZoneLBEnable</code> has been provided to reduce bandwidth costs for traffic ingestion.</p>
+</div>
+<div class="paragraph">
+<p><strong>If "No" is set</strong> (the default), the load balancer will only send mirrored traffic to vSensors in the same Availability Zone as the mirror source. The same is true for osSensor traffic.</p>
+</div>
+<div class="paragraph">
+<p>This option reduces costs by preventing mirror traffic from crossing zones, which can be substantial in large bandwidth environments.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+You must configure the number of vSensors deployed (minimum and desired) to meet or exceed the count of availability zones deployed to, otherwise traffic mirror sessions and osSensors in zones without vSensors will not be mirrored.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>If "Yes" is set</strong>, it is possible to reduce the vSensor count as low as 1 without loss of traffic mirroring, this may be suited to small traffic environments.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Select at least 2 availability zones for highly available fault tolerance.
 </td>
 </tr>
 </table>
