@@ -1332,7 +1332,7 @@ Resources:
                 - "ssm:GetParameter"
                 - "ssm:GetParameters"
               Resource:
-                # Remove double slashes causes by SSM parameter names containing a leading slash
+                # Remove double slashes caused by SSM parameter names containing a leading slash
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
