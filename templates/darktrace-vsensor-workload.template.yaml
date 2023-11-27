@@ -1332,11 +1332,12 @@ Resources:
                 - "ssm:GetParameter"
                 - "ssm:GetParameters"
               Resource:
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceProxy}"
-                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${osSensorHMAC}"
+                # Remove double slashes caused by SSM parameter names containing a leading slash
+                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
+                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
+                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
+                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceProxy}"]]
+                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${osSensorHMAC}"]]
         - PolicyName: "AllowEncryptedCloudWatchLogging"
           PolicyDocument:
             Statement:
