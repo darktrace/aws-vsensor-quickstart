@@ -137,7 +137,7 @@ Parameters:
 
   SessionManagerEnable:
     Default: 'Yes'
-    Description: Configure IAM permissions to enable AWS Systems Manager Sessions to access vSensors remotely. See QuickStart Deployment guide section "Using AWS Sessions Manager" (https://aws-ia.github.io/cfn-ps-darktrace-vsensor/#_using_aws_sessions_manager). This can be used in preference to the Bastion hosts for administrative connections to the vSensors.
+    Description: Configure IAM permissions to enable AWS Systems Manager Sessions to access vSensors remotely. See QuickStart Deployment guide section "Using AWS Sessions Manager" (https://aws-ia.github.io/cfn-ps-darktrace-vsensor/#_using_aws_sessions_manager). This can be used in preference to a jump box for administrative connections to the vSensors. AWS Systems Manager Sessions is the recommended way to connect to your vSensors.
     Type: String
     AllowedValues:
       - 'Yes'
@@ -157,6 +157,7 @@ Parameters:
   InstanceSecurityGroups:
     Type: 'CommaDelimitedList'
     Description: "*Optional* Add additional Security Groups to the VPC by specifying preexisting Security Group IDs. Note, this is in addition to the required vSensor connectivity Security Group (port 80, 443, 4789 for the VPC) which will be added by this QuickStart template. (CommaDelimitedList)"
+    Default: ""
   VsensorUpdatekey:
     Type: AWS::SSM::Parameter::Name
     Description: "The vSensor Update Key is required to download installation packages and updates from Darktrace. It is provided when you create a *push token* probe entry in the Darktrace UI Config or can be found on the Credentials section on the Darktrace Customer Portal (https://customerportal.darktrace.com) (AWS::SSM::Parameter::Name)"
@@ -188,7 +189,7 @@ Parameters:
   SshCIDRBlock:
     Type: String
     Default: '10.0.0.0/24'
-    Description: Permit SSH connections from this CIDR block. The vSensor Security Group will be altered accordingly. It is recommended to set any Bastion host addresses here, or set to the VPC CIDR.
+    Description: Permit SSH connections from this CIDR block. The vSensor Security Group will be altered accordingly. It is recommended to set any jump box addresses here, or set to the VPC CIDR.
   Subnets:
     Type: 'List<AWS::EC2::Subnet::Id>'
     Description: >-
@@ -691,6 +692,9 @@ Resources:
                 Value: 'YES'
         Monitoring:
           Enabled: true
+        MetadataOptions:
+          HttpEndpoint: 'enabled'
+          HttpTokens: 'required'
       LaunchTemplateName:
         !Sub
           - "${ShortID}-vSensor-Launch-Template"
@@ -1332,7 +1336,7 @@ Resources:
                 - "ssm:GetParameter"
                 - "ssm:GetParameters"
               Resource:
-                # Remove double slashes caused by SSM parameter names containing a leading slash
+                # Remove double slashes causes by SSM parameter names containing a leading slash
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
