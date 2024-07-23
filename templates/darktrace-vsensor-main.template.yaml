@@ -445,6 +445,11 @@ Resources:
   RandomStringLambdaFunction:
     Type: AWS::Lambda::Function
     Condition: GenerateShortID
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3030 # Valid value for Runtime (nodejs20.x)
     Properties:
       Code:
         ZipFile: >

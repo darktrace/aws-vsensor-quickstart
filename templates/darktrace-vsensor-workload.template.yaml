@@ -309,6 +309,11 @@ Resources:
   RandomStringLambdaFunction:
     Type: AWS::Lambda::Function
     Condition: GenerateShortID
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3030 # Valid value for Runtime (nodejs20.x)
     Properties:
       Code:
         ZipFile: >
@@ -1031,6 +1036,11 @@ Resources:
     DependsOn: PCAPS
     Type: "AWS::Lambda::Function"
     Condition: CreatePCAPStorage
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3030 # Valid value for Runtime (python3.12)
     Properties:
       Code:
         ZipFile: |
