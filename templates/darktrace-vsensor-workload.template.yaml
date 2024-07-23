@@ -152,8 +152,8 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
   KeyPairName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI.
+    Type: String
+    Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI. Use 'none' to proceed without a key pair (only if you are using SSM or Instance Connect, otherwise you will not be able to access your vSensor).
   InstanceSecurityGroups:
     Type: 'CommaDelimitedList'
     Description: "*Optional* Add additional Security Groups to the VPC by specifying preexisting Security Group IDs. Note, this is in addition to the required vSensor connectivity Security Group (port 80, 443, 4789 for the VPC) which will be added by this QuickStart template. (CommaDelimitedList)"
@@ -279,6 +279,9 @@ Conditions:
   AllowCrossZoneLB: !Equals
     - !Ref CrossZoneLBEnable
     - "Yes"
+  NoKeyPair: !Equals
+    - !Ref KeyPairName
+    - "none"
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -665,7 +668,10 @@ Resources:
                 - CreatePCAPStorage
                 - !Ref PCAPS
                 - ""
-        KeyName: !Ref KeyPairName
+        KeyName: !If
+          - NoKeyPair
+          - !Ref AWS::NoValue
+          - !Ref KeyPairName
         InstanceType: !Ref InstanceType
         BlockDeviceMappings:
           - DeviceName: "/dev/sda1"

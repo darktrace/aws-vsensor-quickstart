@@ -186,8 +186,8 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
   VSensorKeyPairName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI.
+    Type: String
+    Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI. Use 'none' to proceed without a key pair (only if you are using SSM or Instance Connect, otherwise you will not be able to access your vSensor).
   VSensorUpdatekey:
     Type: AWS::SSM::Parameter::Name
     Description: "The vSensor Update Key is required to download installation packages and updates from Darktrace. It is provided when you create a *push token* probe entry in the Darktrace UI Config or can be found on the Credentials section on the Darktrace Customer Portal (https://customerportal.darktrace.com) (AWS::SSM::Parameter::Name)"
