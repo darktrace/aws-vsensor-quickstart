@@ -1456,4 +1456,4 @@ Outputs:
 
   Postdeployment:
     Description: See the deployment guide for post-deployment steps.
-    Value: https://aws-ia.github.io/cfn-ps-darktrace-vsensor/#_postdeployment_steps
+    Value: https://github.com/darktrace/aws-vsensor-quickstart/blob/main/README.md

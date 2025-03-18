@@ -354,7 +354,7 @@ Parameters:
       The Quick Start bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a 
       hyphen (-).
-    Default: aws-ia
+    Default: darktrace-vsensor-quickstart-public
     Description:
       Name of the S3 bucket for your copy of the Quick Start assets. 
       Keep the default name unless you are customizing the template. 
@@ -395,9 +395,6 @@ Parameters:
     Type: String
 
 Conditions:
-  UsingDefaultBucket: !Equals
-    - !Ref QSS3BucketName
-    - "aws-ia"
   CreatePCAPStorage: !Not
     - !Equals
       - !Ref VSensorLifecycleS3BucketDays
@@ -528,16 +525,7 @@ Resources:
     # kics-scan ignore-line
     Properties:
       TemplateURL:
-          !Sub
-          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/aws-vpc.template.yaml'
-          - S3Bucket: !If
-              - UsingDefaultBucket
-              - !Sub "aws-ia-${AWS::Region}"
-              - !Ref "QSS3BucketName"
-            S3Region: !If
-              - UsingDefaultBucket
-              - !Ref "AWS::Region"
-              - !Ref "QSS3BucketRegion"
+          !Sub "https://${QSS3BucketName}.s3.${QSS3BucketRegion}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/aws-vpc.template.yaml"
       Parameters:
         AvailabilityZones:
           !Join
@@ -588,17 +576,7 @@ Resources:
     # Ignore Notification ARN in customer env.
     # kics-scan ignore-line
     Properties:
-      TemplateURL:
-        !Sub
-          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/darktrace-vsensor-workload.template.yaml'
-          - S3Bucket: !If
-              - UsingDefaultBucket
-              - !Sub "aws-ia-${AWS::Region}"
-              - !Ref "QSS3BucketName"
-            S3Region: !If
-              - UsingDefaultBucket
-              - !Ref "AWS::Region"
-              - !Ref "QSS3BucketRegion"
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.${QSS3BucketRegion}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/darktrace-vsensor-workload.template.yaml"
       Parameters:
         DarktraceInstanceHostname: !Ref DarktraceInstanceHostname
         DarktraceInstancePushtoken: !Ref DarktraceInstancePushtoken
@@ -850,4 +828,4 @@ Outputs:
 
   Postdeployment:
     Description: See the deployment guide for post-deployment steps.
-    Value: https://aws-ia.github.io/cfn-ps-darktrace-vsensor/#_postdeployment_steps
+    Value: https://github.com/darktrace/aws-vsensor-quickstart/blob/main/README.md
