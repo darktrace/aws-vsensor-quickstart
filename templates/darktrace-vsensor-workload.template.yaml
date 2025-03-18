@@ -149,8 +149,17 @@ Parameters:
     AllowedValues:
       - t3.medium
       - m5.large
+      - m6i.large
+      - m7i.large
+      - m5.xlarge
+      - m6i.xlarge
+      - m7i.xlarge
       - m5.2xlarge
+      - m6i.2xlarge
+      - m6i.2xlarge
       - m5.4xlarge
+      - m6i.4xlarge
+      - m7i.4xlarge
   KeyPairName:
     Type: String
     Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI. Use 'none' to proceed without a key pair (only if you are using SSM or Instance Connect, otherwise you will not be able to access your vSensor).
