@@ -165,7 +165,7 @@ Parameters:
     Description: Add a pre-existing EC2 key pair to use to authenticate to the vSensors. vSensors are designed to be self managed - however some optional administrative tasks will need to be performed via CLI. Use 'none' to proceed without a key pair (only if you are using SSM or Instance Connect, otherwise you will not be able to access your vSensor).
   InstanceSecurityGroups:
     Type: 'CommaDelimitedList'
-    Description: "*Optional* Add additional Security Groups to the VPC by specifying preexisting Security Group IDs. Note, this is in addition to the required vSensor connectivity Security Group (port 80, 443, 4789 for the VPC) which will be added by this QuickStart template. (CommaDelimitedList)"
+    Description: "*Optional* Add additional Security Groups to the VPC by specifying preexisting Security Group IDs. Note, this is in addition to the required vSensor connectivity Security Group (port 80, 443, 4789, 6081 for the VPC) which will be added by this QuickStart template. (CommaDelimitedList)"
     Default: ""
   VsensorUpdatekey:
     Type: AWS::SSM::Parameter::Name
@@ -267,9 +267,6 @@ Parameters:
     Description: Quick Start short unique ID used to identify resources from other installations of this Quick Start. If left empty, a random string is generated.
     Default: ""
     Type: String
-  FocalAmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id'
 
 Conditions:
   NotUsingExtraInstanceSecurityGroups: !Equals
@@ -428,9 +425,14 @@ Resources:
           ToPort: 443
           CidrIp: !Ref VpcCIDRBlock
         - IpProtocol: udp
-          Description: Allow AWS Traffic Mirroring packets to be ingested
+          Description: Allow AWS Traffic Mirroring VXLAN packets to be ingested
           FromPort: 4789
           ToPort: 4789
+          CidrIp: !Ref VpcCIDRBlock
+        - IpProtocol: udp
+          Description: Allow Traffic Mirroring GENEVE packets to be ingested
+          FromPort: 6081
+          ToPort: 6081
           CidrIp: !Ref VpcCIDRBlock
       SecurityGroupEgress:
         - Description: Allow all outbound traffic to access the Darktrace Packages / Ubuntu CDNs on HTTP.
@@ -482,7 +484,7 @@ Resources:
 
               # See https://youtu.be/unMiTRw8JVE for an example on how to review this console output if Cloudwatch logging fails.
               echo "Starting userdata"
-              apt update && apt install -y awscli
+              snap install aws-cli --classic
 
               echo "Getting instance ID and attempt to disable source-dest checking metadata."
               TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120" -s`
@@ -513,6 +515,11 @@ Resources:
                           "log_stream_name": "{instance_id}"
                         },
                         {
+                          "file_path": "/var/log/sabreserver/plasma/plasma.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
                           "file_path": "/var/log/darktrace-apt-dist-upgrade.log",
                           "log_group_name": "${vSensorLogGroup}",
                           "log_stream_name": "{instance_id}"
@@ -538,12 +545,47 @@ Resources:
                           "log_stream_name": "{instance_id}"
                         },
                         {
-                          "file_path": "/var/log/darktrace-sabre-mole/manager.log",
+                          "file_path": "/var/log/inithooks.log",
                           "log_group_name": "${vSensorLogGroup}",
                           "log_stream_name": "{instance_id}"
                         },
                         {
                           "file_path": "/var/log/nginx/access.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/log/rs-tunnels/*.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/opt/bro/spool/manager/stdout.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/opt/bro/spool/manager/stderr.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/opt/bro/spool/tmp/*/.crash-diag.out",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/log/chronicle/*.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/log/heka/*.log",
+                          "log_group_name": "${vSensorLogGroup}",
+                          "log_stream_name": "{instance_id}"
+                        },
+                        {
+                          "file_path": "/var/log/redis/*.log",
                           "log_group_name": "${vSensorLogGroup}",
                           "log_stream_name": "{instance_id}"
                         },
@@ -699,7 +741,7 @@ Resources:
                   - customerSecurityGroups: !Join [",", !Ref "InstanceSecurityGroups"]
         IamInstanceProfile:
           Arn: !GetAtt vSensorIamInstanceProfile.Arn
-        ImageId: !Ref FocalAmiId
+        ImageId: 'resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
         TagSpecifications:
           - ResourceType: 'instance'
             Tags:
@@ -827,6 +869,29 @@ Resources:
       TrafficDirection: 'egress'
       TrafficMirrorFilterId: !Ref TrafficMirrorFilter
 
+  TargetGroupUDP6081:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name:
+        !Sub
+          - "${ShortID}-vSensor-ASG-UDP6081"
+          - ShortID: !If
+            - GenerateShortID
+            - !GetAtt ShortIDRand.IDString
+            - !Ref ShortID
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /healthcheck
+      HealthCheckPort: '443'
+      HealthCheckProtocol: HTTPS
+      Port: 6081
+      Protocol: 'UDP'
+      TargetGroupAttributes:
+        - Key: deregistration_delay.connection_termination.enabled
+          Value: true
+      TargetType: 'instance'
+      VpcId: !Ref DeploymentVPC
+
   TargetGroupUDP4789:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
@@ -923,6 +988,7 @@ Resources:
       DesiredCapacity: !Ref DesiredCapacityASG
       VPCZoneIdentifier: !Ref Subnets
       TargetGroupARNs:
+        - !Ref TargetGroupUDP6081
         - !Ref TargetGroupUDP4789
         - !Ref TargetGroupTCP443
         - !Ref TargetGroupTCP80
@@ -1231,6 +1297,16 @@ Resources:
       Scheme: internal
       Type: network
 
+  LoadBalancerListenerUDP6081:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+       - Type: "forward"
+         TargetGroupArn: !Ref TargetGroupUDP6081
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 6081
+      Protocol: 'UDP'
+
   LoadBalancerListenerUDP4789:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -1356,7 +1432,7 @@ Resources:
                 - "ssm:GetParameter"
                 - "ssm:GetParameters"
               Resource:
-                # Remove double slashes caused by SSM parameter names containing a leading slash
+                # Remove double slashes causes by SSM parameter names containing a leading slash
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
                 - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
