@@ -269,6 +269,14 @@ Parameters:
     Type: String
 
 Conditions:
+  # Check if begining of SSM parameter name is an ARN. Cloudformation allows name or ARN.
+  UsingSSMARNs: !Equals
+    - "arn"
+    - Fn::Select:
+      - 0
+      - Fn::Split:
+        - ":"
+        - !Ref DarktraceInstanceHostname
   NotUsingExtraInstanceSecurityGroups: !Equals
     - !Join [",", !Ref "InstanceSecurityGroups"]
     - ""
@@ -1028,6 +1036,11 @@ Resources:
     # Ignore Bucket versioning for PCAPS.
     # kics-scan ignore-line
     Condition: CreatePCAPStorage
+    Metadata:
+      cfn-lint:
+        config:
+          # Lint cannot resolve lambda generated ShortID is lowercase alphanumeric.
+          ignore_checks: [W1031]
     Properties:
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -1433,11 +1446,18 @@ Resources:
                 - "ssm:GetParameters"
               Resource:
                 # Remove double slashes caused by SSM parameter names containing a leading slash
-                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
-                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
-                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
-                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceProxy}"]]
-                - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${osSensorHMAC}"]]
+                !If
+                  - UsingSSMARNs
+                  - - !Ref VsensorUpdatekey
+                    - !Ref DarktraceInstanceHostname
+                    - !Ref DarktraceInstancePushtoken
+                    - !Ref DarktraceInstanceProxy
+                    - !Ref osSensorHMAC
+                  - - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${VsensorUpdatekey}"]]
+                    - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceHostname}"]]
+                    - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstancePushtoken}"]]
+                    - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DarktraceInstanceProxy}"]]
+                    - !Join ["/", !Split ["//", !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${osSensorHMAC}"]]
         - PolicyName: "AllowEncryptedCloudWatchLogging"
           PolicyDocument:
             Statement:
