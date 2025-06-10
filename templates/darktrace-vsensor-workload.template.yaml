@@ -1541,6 +1541,10 @@ Outputs:
     Description: DNS name of the Network Load Balancer, required for osSensor clients.
     Value: !GetAtt LoadBalancer.DNSName
 
+  LoadBalancerDNSZoneNameID:
+    Description: Route 53 hosted zone name of the Network Load Balancer, required for osSensor clients.
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+
   TrafficMirrorFilterId:
     Description: ID of the Traffic Mirror filter generated for Traffic Mirror sessions.
     Value: !Ref TrafficMirrorFilter
