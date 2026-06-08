@@ -330,7 +330,7 @@ Resources:
       cfn-lint:
         config:
           ignore_checks:
-            - E3030 # Valid value for Runtime (nodejs20.x)
+            - E3030 # Valid value for Runtime (nodejs24.x)
     Properties:
       Code:
         ZipFile: >
@@ -338,10 +338,9 @@ Resources:
               var result = '';
               for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
               return result;
-          }; exports.handler = (event, context) =>{
+          }; exports.handler = async (event, context) =>{
             let str = "";
             let length = 12;
-            let shortID = "";
             if ("ResourceProperties" in event) {
               if ("ShortID" in event['ResourceProperties'] && event['ResourceProperties']['ShortID'] != "") {
                 str = event['ResourceProperties']['ShortID'];
@@ -354,10 +353,10 @@ Resources:
               str = randomString(length, '0123456789abcdefghijklmnopqrstuvwxyz');
             }
             const responseData = {IDString: str};
-            response.send(event, context, response.SUCCESS, responseData);
+            await response.send(event, context, response.SUCCESS, responseData);
           };
       Handler: index.handler
-      Runtime: nodejs20.x
+      Runtime: nodejs24.x
       Role: !GetAtt LambdaExecutionRole.Arn
       MemorySize: 128
       Timeout: 20
@@ -1134,7 +1133,7 @@ Resources:
       cfn-lint:
         config:
           ignore_checks:
-            - E3030 # Valid value for Runtime (python3.12)
+            - E3030 # Valid value for Runtime (python3.14)
     Properties:
       Code:
         ZipFile: |
@@ -1232,7 +1231,7 @@ Resources:
 
               #requests.put(event['ResponseURL'], data=json.dumps(response_body))
 
-      Description: cleanup Bucket on Delete Lambda Lambda function.
+      Description: cleanup Bucket on Delete Lambda function.
       FunctionName: !Sub
         - "${ShortID}-vSensor-PCAPS-Cleanup"
         - ShortID: !If
@@ -1241,7 +1240,7 @@ Resources:
           - !Ref ShortID
       Handler: index.lambda_handler
       Role: !GetAtt CleanupBucketOnDeleteLambdaRole.Arn
-      Runtime: python3.12
+      Runtime: python3.14
       Timeout: 60
       Tags:
         - Key: darktrace-vsensor-quickstart
