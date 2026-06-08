@@ -559,7 +559,7 @@ Resources:
         VPCCIDR:
           Ref: VPCCIDR
       Tags:
-        - Key: "Name"
+        - Key: "DeployedBy"
           Value:
             !Sub
               - "${ShortID}-vSensor-VPC-Stack"
@@ -641,7 +641,7 @@ Resources:
             - !GetAtt ShortIDRand.IDString
             - !Ref ShortID
       Tags:
-        - Key: "Name"
+        - Key: "DeployedBy"
           Value:
             !Sub
               - "${ShortID}-vSensor-Stack"
