@@ -786,6 +786,13 @@ Outputs:
       - VSensorStack
       - Outputs.LoadBalancerDNS
 
+  LoadBalancerDNSZoneID:
+    Description: Route 53 hosted zone name of the Network Load Balancer, required for osSensor clients.
+    Value:
+      Fn::GetAtt:
+      - VSensorStack
+      - Outputs.LoadBalancerDNSZoneID
+
   TrafficMirrorFilterId:
     Description: ID of the Traffic Mirror filter generated for Traffic Mirror sessions.
     Value:
